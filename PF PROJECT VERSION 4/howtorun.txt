@@ -1,0 +1,11 @@
+open cmd in directory 
+
+first commmand :
+g++ main.cpp -o main.exe -lws2_32 -D_WIN32_WINNT=0x0A00
+
+second commmand:
+main.exe
+
+search 
+
+http://localhost:8080

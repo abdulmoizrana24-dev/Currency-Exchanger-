@@ -1,0 +1,319 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>FIST Exchanger</title>
+
+    <style>
+       body {
+    font-family: Arial, sans-serif;
+    background: #0b1220;
+    margin: 0;
+    color: #e5e7eb;
+}
+
+
+nav {
+    background: #0f172a;
+    padding: 14px 24px;
+    display: flex;
+    align-items: center;
+    border-bottom: 1px solid #1f2937;
+}
+
+
+.nav-left {
+    flex: 1;
+}
+
+
+.nav-center {
+    flex: 1;
+    text-align: center;
+}
+
+.nav-center a {
+    color: #9ca3af;
+    margin: 0 12px;
+    text-decoration: none;
+    font-size: 14px;
+}
+
+.nav-center a:hover {
+    color: #0ea5e9;
+}
+
+
+.nav-right {
+    flex: 1;
+    text-align: right;
+}
+
+
+h1 {
+    margin: 0;
+    font-size: 18px;
+    color: #e5e7eb;
+}
+
+
+.container {
+    padding: 25px;
+}
+
+.row {
+    display: flex;
+    gap: 20px;
+}
+
+
+.box {
+    background: #111827;
+    padding: 18px;
+    border-radius: 10px;
+    border: 1px solid #1f2937;
+}
+
+
+label {
+    font-size: 12px;
+    color: #9ca3af;
+}
+
+input {
+    width: 100%;
+    padding: 9px;
+    margin-top: 6px;
+    background: #020617;
+    border: 1px solid #1f2937;
+    border-radius: 6px;
+    color: #e5e7eb;
+}
+
+
+button {
+    width: 100%;
+    padding: 10px;
+    margin-top: 12px;
+    background: #0ea5e9;
+    color: #020617;
+    border: none;
+    border-radius: 8px;
+    cursor: pointer;
+    font-weight: bold;
+}
+
+button:hover {
+    background: #38bdf8;
+}
+
+
+.update-btn {
+    background: #020617;
+    color: #e5e7eb;
+    border: 1px solid #1f2937;
+    padding: 8px 14px;
+    border-radius: 20px;
+    cursor: pointer;
+    font-size: 12px;
+}
+
+.update-btn:hover {
+    background: #1f2937;
+}
+
+
+
+#res {
+    margin-top: 12px;
+    font-size: 18px;
+    color: #e5e7eb;
+}
+
+
+.rate {
+    border-bottom: 1px solid #1f2937;
+    padding: 6px 0;
+    font-size: 14px;
+}
+
+
+#strong .rate {
+    color: #22c55e;
+}
+
+#weak .rate {
+    color: #ef4444;
+}
+
+
+#hist div {
+    background: #020617;
+    padding: 8px;
+    margin-bottom: 8px;
+    font-size: 12px;
+    border-left: 4px solid #0ea5e9;
+    border-radius: 6px;
+}
+
+
+#search {
+    margin-bottom: 12px;
+    background: #020617;
+    border: 1px solid #1f2937;
+    color: #e5e7eb;
+}
+
+
+    </style>
+</head>
+
+<body>
+
+
+<nav>
+    
+    <div class="nav-left">
+        <h1>FIST Exchanger</h1>
+    </div>
+
+    
+    <div class="nav-center">
+        <a href="#converter">Converter</a>
+        <a href="#market">Market</a>
+        <a href="#all-rates">All Rates</a>
+    </div>
+
+    
+    <div class="nav-right">
+        <button onclick="updateRates()" class="update-btn">Update API</button>
+    </div>
+</nav>
+
+
+<div class="container">
+
+    
+    <div class="row">
+
+        
+        <div class="box" id="converter">
+            <h2>Convert Currency</h2>
+
+            <label>Amount</label>
+            <input id="amt" type="number" value="100">
+
+            <label>From</label>
+            <input id="from" placeholder="USD">
+
+            <label>To</label>
+            <input id="to" placeholder="PKR">
+
+            <button onclick="convert()">Convert</button>
+
+            <h3 id="res"></h3>
+
+            <button onclick="runFileProcess()">Process input.txt</button>
+        </div>
+
+        
+        <div class="box">
+            <h2>Transaction History</h2>
+            <div id="hist"></div>
+        </div>
+
+    </div>
+
+    
+    <div class="row" style="margin-top:20px" id="market">
+        <div class="box">
+            <h2>Strongest Currencies</h2>
+            <div id="strong"></div>
+        </div>
+
+        <div class="box">
+            <h2>Weakest Currencies</h2>
+            <div id="weak"></div>
+        </div>
+    </div>
+
+    
+    <div class="box" style="margin-top:20px" id="all-rates">
+        <h2>All Rates</h2>
+        <input id="search" placeholder="Search currency" onkeyup="searchRates()">
+        <div id="allRates"></div>
+    </div>
+
+</div>
+
+<script>
+    
+
+    async function convert() {
+        const a = document.getElementById('amt').value;
+        const f = document.getElementById('from').value;
+        const t = document.getElementById('to').value;
+        if (!a || !f || !t) return;
+
+        const r = await fetch(`http://localhost:8080/convert?amount=${a}&from=${f}&to=${t}`);
+        const d = await r.json();
+        document.getElementById('res').innerText = d.res.toFixed(2) + " " + t.toUpperCase();
+        loadHistory();
+    }
+
+    async function loadData() {
+        const r = await fetch('http://localhost:8080/data');
+        const d = await r.json();
+
+        document.getElementById('strong').innerHTML =
+            d.strong.map(x => `<div class="rate">${x.c} : ${x.r}</div>`).join("");
+
+        document.getElementById('weak').innerHTML =
+            d.weak.map(x => `<div class="rate">${x.c} : ${x.r}</div>`).join("");
+
+        document.getElementById('allRates').innerHTML =
+            Object.entries(d.rates).map(([c,v]) =>
+                `<div class="rate" data-code="${c}">${c} : ${v}</div>`
+            ).join("");
+    }
+
+    async function loadHistory() {
+        const r = await fetch('http://localhost:8080/history');
+        const d = await r.text();
+        document.getElementById('hist').innerHTML =
+            d.split('\n').reverse().map(l => `<div>${l}</div>`).join("");
+    }
+
+    function searchRates() {
+        const q = document.getElementById('search').value.toUpperCase();
+        document.querySelectorAll('#allRates .rate').forEach(el => {
+            el.style.display = el.innerText.includes(q) ? 'block' : 'none';
+        });
+    }
+
+    async function runFileProcess() {
+        const r = await fetch('http://localhost:8080/process-file');
+        const d = await r.json();
+        alert("File Processed: " + d.msg);
+    }
+
+   async function updateRates() {
+    await loadData();
+}
+
+
+async function updateRates() {
+    await loadData();  
+    alert("Exchange rates updated successfully");
+}
+
+
+
+    window.onload = () => {
+        loadData();
+        loadHistory();
+    };
+</script>
+
+</body>
+</html>
